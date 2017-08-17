@@ -8,6 +8,7 @@ var bodyParser = require('body-parser');
 var routes = require('./routes/index');
 var users = require('./routes/users');
 var documents = require('./routes/documents');
+var dbConnect = require('./config/connect');
 
 var app = express();
 
@@ -64,29 +65,32 @@ elastic.indexExists().then(function (exists) {
     return elastic.deleteIndex();
   }
 }).then(function () {
-  return elastic.initIndex().then(elastic.initMapping).then(function () {
+  return elastic.initIndex().then(elastic.initMapping).then(dbConnect).then(client => client.query('select * from books'))
+  .then(res =>Promise.all(res.rows.map(elastic.addDocument)))
+  .catch(e => console.log(e, 'this is an error'));
+  // return elastic.initIndex().then(elastic.initMapping).then(function () {
     //Add a few book titles for the autocomplete
     //elasticsearch offers a bulk functionality as well, but this is for a different time
-    var promises = [
-      'Thing Explainer',
-      'The Internet Is a Playground',
-      'The Pragmatic Programmer',
-      'The Hitchhikers Guide to the Galaxy',
-      'Trial of the Clone',
-      'All Quiet on the Western Front',
-      'The Animal Farm',
-      'The Circle'
-    ].map(function (bookTitle) {
-      return elastic.addDocument({
-        title: bookTitle,
-        content: bookTitle + " content!",
-        metadata: {
-          titleLength: bookTitle.length
-        }
-      });
-    });
-    return Promise.all(promises);
-  });
+  //   var promises = [
+  //     'Thing Explainer',
+  //     'The Internet Is a Playground',
+  //     'The Pragmatic Programmer',
+  //     'The Hitchhikers Guide to the Galaxy',
+  //     'Trial of the Clone',
+  //     'All Quiet on the Western Front',
+  //     'The Animal Farm',
+  //     'The Circle'
+  //   ].map(function (bookTitle) {
+  //     return elastic.addDocument({
+  //       title: bookTitle,
+  //       content: bookTitle + " content!",
+  //       metadata: {
+  //         titleLength: bookTitle.length
+  //       }
+  //     });
+  //   });
+  //   return Promise.all(promises);
+  // });
 }).then((res) => console.log(res, 'resposne')).catch(e => console.log(e, 'error from appjs'));
 
 
