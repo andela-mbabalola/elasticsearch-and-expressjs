@@ -60,38 +60,17 @@ app.use(function (err, req, res, next) {
 });
 
 var elastic = require('./elasticsearch');
-elastic.indexExists().then(function (exists) {
+elastic.indexExists().then((exists) => {
   if (exists) {
     return elastic.deleteIndex();
   }
-}).then(function () {
-  return elastic.initIndex().then(elastic.initMapping).then(dbConnect).then(client => client.query('select * from books'))
-  .then(res =>Promise.all(res.rows.map(elastic.addDocument)))
-  .catch(e => console.log(e, 'this is an error'));
-  // return elastic.initIndex().then(elastic.initMapping).then(function () {
-    //Add a few book titles for the autocomplete
-    //elasticsearch offers a bulk functionality as well, but this is for a different time
-  //   var promises = [
-  //     'Thing Explainer',
-  //     'The Internet Is a Playground',
-  //     'The Pragmatic Programmer',
-  //     'The Hitchhikers Guide to the Galaxy',
-  //     'Trial of the Clone',
-  //     'All Quiet on the Western Front',
-  //     'The Animal Farm',
-  //     'The Circle'
-  //   ].map(function (bookTitle) {
-  //     return elastic.addDocument({
-  //       title: bookTitle,
-  //       content: bookTitle + " content!",
-  //       metadata: {
-  //         titleLength: bookTitle.length
-  //       }
-  //     });
-  //   });
-  //   return Promise.all(promises);
-  // });
-}).then((res) => console.log(res, 'resposne')).catch(e => console.log(e, 'error from appjs'));
+}).then(elastic.initIndex)
+  .then(elastic.initMapping)
+  .then(dbConnect)
+  .then(client => client.query('select * from books'))
+  .then(res => Promise.all(res.rows.map(elastic.addDocument)))
+  .then((res) => console.log(res, 'resposne'))
+  .catch(e => console.log(e, 'error from appjs'));
 
 
 module.exports = app;

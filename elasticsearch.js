@@ -3,8 +3,6 @@ var elasticsearch = require('elasticsearch');
 var elasticClient = new elasticsearch.Client({
     host: 'localhost:9200',
     log: 'info',
-    // apiVersion: '5.5'
-
 });
 
 var indexName = "randomindex";
@@ -46,6 +44,7 @@ function initMapping() {
         body: {
             properties: {
                 title: { type: "string" },
+                author: {type: "string"},
                 description: { type: "string" },
                 suggest: {
                     type: "completion",
@@ -64,9 +63,10 @@ function addDocument(document) {
         type: "document",
         body: {
             title: document.title,
+            author: document.author,
             description: document.description,
             suggest: {
-                input: document.title.split(" ")
+                input: `${document.title}${document.author}${document.description}`.split(" ").filter(x => !!x)
             }
         }
     });
@@ -74,7 +74,6 @@ function addDocument(document) {
 exports.addDocument = addDocument;
 
 function getSuggestions(input) {
-    console.log(input, 'int')
     return elasticClient.suggest({
         index: indexName,
         body: {
